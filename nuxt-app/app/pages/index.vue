@@ -5,7 +5,6 @@
         <div class="logo">MyMeri<span class="dot">.</span></div>
         <div class="nav-links">
           <NuxtLink to="/subscribe" class="btn-primary-sm glass">Get Started</NuxtLink>
-          <NuxtLink to="/login" class="nav-item">Admin</NuxtLink>
         </div>
       </div>
     </nav>
@@ -13,25 +12,25 @@
     <header class="hero">
       <div class="container mobile-stack">
         <div class="hero-content">
-          <span class="badge-premium">Wellness Redefined</span>
-          <h1 class="premium-gradient">Your cycle, <br />carefully curated.</h1>
-          <p class="hero-text text-muted">A premium subscription box for your period, delivered exactly when you need it. High-quality pads, soothing teas, and artisanal treats delivered to your door based on your unique cycle.</p>
+          <span class="badge-premium">Bulk Security • 20% Savings</span>
+          <h1 class="premium-gradient">End the <br />Pharmacy Dash.</h1>
+          <p class="hero-text text-muted">Stop the last-minute panic buys. MyMeri delivers your custom "Stock-Up" stash 3 days before you even need to think about it. Professional care, delivered in bulk for your peace of mind.</p>
           <div class="hero-actions">
-            <NuxtLink to="/subscribe" class="btn-hero pink-glow">Start Your Journey</NuxtLink>
-            <a href="#how-it-works" class="btn-secondary-hero glass">See how it works</a>
+            <NuxtLink to="/subscribe" class="btn-hero pink-glow">Secure My Stash</NuxtLink>
+            <a href="#how-it-works" class="btn-secondary-hero glass">Why go bulk?</a>
           </div>
         </div>
         <div class="hero-image-wrapper">
-          <img src="/hero-box.png" alt="MyMeri Subscription Box" class="hero-img glass-border" />
+          <img src="/hero-box.png" alt="MyMeri Stock-Up Box" class="hero-img glass-border" />
           <div class="stats-card-float glass">
             <div class="stat-item">
               <strong>98.2%</strong>
-              <span>Delivery Accuracy</span>
+              <span>Security Rate</span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item">
-              <strong>2,400+</strong>
-              <span>Subscribers</span>
+              <strong>20% Off</strong>
+              <span>Bulk Savings</span>
             </div>
           </div>
         </div>
@@ -41,25 +40,25 @@
     <section id="how-it-works" class="features">
       <div class="container">
         <div class="section-header">
-          <h2>The MyMeri Flow</h2>
-          <p class="text-muted">Effortless care from start to finish.</p>
+          <h2>The "Advance" Logic</h2>
+          <p class="text-muted">We think ahead so you don't have to.</p>
         </div>
         
         <div class="feature-grid">
           <div class="feature-card glass hover-lift">
-            <div class="feature-icon">📝</div>
-            <h3>Onboarding</h3>
-            <p>Tell us about your cycle and preferences once. We handle the rest.</p>
+            <div class="feature-icon">🛡️</div>
+            <h3>Bulk Security</h3>
+            <p>Buy in quarterly bundles. Never run out of your preferred brand again.</p>
           </div>
           <div class="feature-card glass hover-lift active-glow">
-            <div class="feature-icon">💬</div>
-            <h3>WhatsApp Nudge</h3>
-            <p>We send a gentle check-in 7 days before your cycle to confirm your box.</p>
+            <div class="feature-icon">🔔</div>
+            <h3>14-Day Advance</h3>
+            <p>For bulk users, we nudge you 2 weeks early to ensure your next stash is ready.</p>
           </div>
           <div class="feature-card glass hover-lift">
-            <div class="feature-icon">📦</div>
-            <h3>Discreet Delivery</h3>
-            <p>Your box arrives subtly and securely, right as you need it most.</p>
+            <div class="feature-icon">💸</div>
+            <h3>Economy of Scale</h3>
+            <p>Save significantly on unit price and delivery fees by stocking up quarterly.</p>
           </div>
         </div>
       </div>
@@ -68,8 +67,8 @@
     <section class="tiers-preview">
       <div class="container">
         <div class="section-header">
-          <h2>Select Your Experience</h2>
-          <p class="text-muted">Three tiers of curated care for every need.</p>
+          <h2>Select Your Security</h2>
+          <p class="text-muted">Save more by planning ahead with our Quarterly stashes.</p>
         </div>
         
         <div class="tier-grid">
@@ -78,12 +77,23 @@
             <div class="price">GHS 120<span>/month</span></div>
             <ul class="tier-features">
               <li>Premium Eco-Pads</li>
-              <li>WhatsApp Tracking</li>
-              <li>Standard Packaging</li>
+              <li>Standard 7-Day Nudge</li>
+              <li>Monthly Delivery</li>
             </ul>
           </div>
           <div class="tier-card glass featured">
-            <div class="best-value">Best Seller</div>
+            <div class="best-value">Best Logic</div>
+            <h3>Peace of Mind</h3>
+            <div class="price">GHS 480<span>/quarter</span></div>
+            <div class="savings-info">Save 20% vs Retail</div>
+            <ul class="tier-features">
+              <li>Full 3-Month Supply</li>
+              <li>14-Day Advance Nudge</li>
+              <li>Single Yearly Logistics</li>
+              <li>Priority Bulk Access</li>
+            </ul>
+          </div>
+          <div class="tier-card glass">
             <h3>Comfort</h3>
             <div class="price">GHS 200<span>/month</span></div>
             <ul class="tier-features">
@@ -91,16 +101,6 @@
               <li>Herbal Cycle Teas</li>
               <li>Artisanal Dark Chocolate</li>
               <li>Priority Packaging</li>
-            </ul>
-          </div>
-          <div class="tier-card glass">
-            <h3>Eco Premium</h3>
-            <div class="price">GHS 350<span>/month</span></div>
-            <ul class="tier-features">
-              <li>Everything in Comfort</li>
-              <li>Organic Cotton Liners</li>
-              <li>Lavender Heat Patch</li>
-              <li>Reusable Eco-Case</li>
             </ul>
           </div>
         </div>
@@ -115,7 +115,6 @@
             <p class="text-muted">Pan-African wellness, delivered with dignity.</p>
           </div>
           <div class="footer-links">
-            <NuxtLink to="/login" class="nav-item">Admin Login</NuxtLink>
             <NuxtLink to="/subscribe" class="nav-item">Subscribe</NuxtLink>
           </div>
         </div>
@@ -364,13 +363,20 @@ h1 {
 .price {
   font-size: 48px;
   font-weight: 700;
-  margin-bottom: 32px;
+  margin-bottom: 8px;
 }
 
 .price span {
   font-size: 16px;
   font-weight: 400;
   opacity: 0.5;
+}
+
+.savings-info {
+  color: #34c759;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 32px;
 }
 
 .tier-features {

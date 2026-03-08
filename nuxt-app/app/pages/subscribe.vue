@@ -5,26 +5,49 @@
     </nav>
 
     <div class="subscribe-container">
-      <header class="page-header">
+      <header class="page-header narrow">
         <span class="step-label">Step 1 of 2</span>
-        <h1 class="premium-gradient">Tailor Your Box</h1>
-        <p class="text-muted">Select the curated experience that fits your cycle best.</p>
+        <h1 class="premium-gradient">End the Pharmacy Dash</h1>
+        <p class="text-muted">Save 20% and gain total security with a 3-month "Stock-Up" supply.</p>
       </header>
+
+      <!-- Cycle Pivot Toggle -->
+      <div class="cycle-pivot glass animate-fade-in">
+        <button 
+          class="pivot-btn" 
+          :class="{ active: form.cyclePreference === 'Monthly' }"
+          @click="form.cyclePreference = 'Monthly'"
+        >
+          Monthly Flow
+          <span>Standard Delivery</span>
+        </button>
+        <button 
+          class="pivot-btn stock-up" 
+          :class="{ active: form.cyclePreference === 'Quarterly' }"
+          @click="form.cyclePreference = 'Quarterly'"
+        >
+          Stock-Up (Bulk) 💎
+          <span>3 Months of Security</span>
+        </button>
+      </div>
 
       <!-- Tier Selection Section -->
       <section class="tiers-selection">
         <div class="tier-grid">
           <div 
-            v-for="tier in tiers" 
+            v-for="tier in filteredTiers" 
             :key="tier.name" 
             class="tier-pill glass" 
-            :class="{ active: selectedTier === tier.name }"
+            :class="{ active: selectedTier === tier.name, 'featured-glow': tier.name === 'Peace of Mind' }"
             @click="selectedTier = tier.name"
           >
             <div class="tier-icon">{{ tier.icon }}</div>
             <div class="tier-info">
-              <h3>{{ tier.name }}</h3>
-              <p>{{ tier.price[form.country] }} {{ tier.name !== 'Custom' ? '/ Mo' : '' }}</p>
+              <div class="tier-badge-row">
+                <h3>{{ tier.name }}</h3>
+                <span v-if="tier.savings" class="savings-tag">{{ tier.savings }} Savings</span>
+              </div>
+              <p>{{ tier.price[form.country] }} {{ form.cyclePreference === 'Quarterly' ? '(Quarterly)' : '/ Mo' }}</p>
             </div>
             <div class="check-circle" v-if="selectedTier === tier.name">✓</div>
           </div>
@@ -42,15 +65,20 @@
               v-for="item in inventoryItems" 
               :key="item.id" 
               class="inventory-item" 
-              :class="{ selected: isItemSelected(item.id) }"
-              @click="toggleItem(item)"
+              :class="{ selected: getItemQuantity(item.id) > 0 }"
             >
               <div class="item-meta">
                 <span class="item-name">{{ item.name }}</span>
                 <span class="item-price">{{ item.currency }} {{ item.price }}</span>
               </div>
-              <div class="item-action">
-                {{ isItemSelected(item.id) ? 'Added ✓' : '+ Add' }}
+              
+              <div class="quantity-controls" v-if="getItemQuantity(item.id) > 0">
+                <button class="qty-btn" @click="updateQuantity(item, -1)">-</button>
+                <span class="qty-count">{{ getItemQuantity(item.id) }}</span>
+                <button class="qty-btn" @click="updateQuantity(item, 1)">+</button>
+              </div>
+              <div v-else class="item-action" @click="updateQuantity(item, 1)">
+                + Add
               </div>
             </div>
           </div>
@@ -159,10 +187,10 @@ const inventoryItems = ref([])
 const selectedItems = ref([])
 
 const tiers = [
-  { name: 'Essential', icon: '🌸', price: { GH: 'GHS 120', NG: 'NGN 2500', KE: 'KES 850' }, features: ['Premium Eco-Pads (12ct)', 'WhatsApp Cycle Tracking', 'Standard Packaging'] },
-  { name: 'Comfort', icon: '✨', price: { GH: 'GHS 200', NG: 'NGN 4500', KE: 'KES 1500' }, features: ['Essential + Night Pads', 'Cramp Relief Tea', 'Artisanal Dark Chocolate', 'Priority Packaging'] },
-  { name: 'Eco Premium', icon: '🌿', price: { GH: 'GHS 350', NG: 'NGN 8000', KE: 'KES 2800' }, features: ['Everything in Comfort', 'Organic Cotton Liners', 'Lavender Heat Patches', 'Reusable Period Underwear'] },
-  { name: 'Custom', icon: '🎨', price: { GH: 'Tailor Your Own', NG: 'Tailor Your Own', KE: 'Tailor Your Own' }, features: ['Pick items individually', 'Pay based on selection', 'Full flexibility'] }
+  { name: 'Essential', icon: '🌸', mode: 'Monthly', price: { GH: 'GHS 120', NG: 'NGN 2500', KE: 'KES 850' }, features: ['Premium Eco-Pads (12ct)', 'WhatsApp Cycle Tracking', 'Standard Packaging'] },
+  { name: 'Comfort', icon: '✨', mode: 'Monthly', price: { GH: 'GHS 200', NG: 'NGN 4500', KE: 'KES 1500' }, features: ['Essential + Night Pads', 'Cramp Relief Tea', 'Artisanal Dark Chocolate', 'Priority Packaging'] },
+  { name: 'Peace of Mind', icon: '💎', mode: 'Quarterly', savings: '20%', price: { GH: 'GHS 480', NG: 'NGN 10500', KE: 'KES 3500' }, features: ['Full 3-Month Bulk Supply', 'Quarterly Delivery (Single Trip)', 'Priority "Emergency Fetch" Access', 'Maximum Price Savings'] },
+  { name: 'Custom', icon: '🎨', mode: 'Both', price: { GH: 'Tailor Your Own', NG: 'Tailor Your Own', KE: 'Tailor Your Own' }, features: ['Pick items individually', 'Quantity bulk selectors', 'Pay based on selection'] }
 ]
 
 const form = reactive({
@@ -172,7 +200,12 @@ const form = reactive({
   address: '',
   lastDate: '',
   cycleLength: 28,
-  is_discreet: false
+  is_discreet: false,
+  cyclePreference: 'Monthly'
+})
+
+const filteredTiers = computed(() => {
+    return tiers.filter(t => t.mode === form.cyclePreference || t.mode === 'Both')
 })
 
 const currentTier = computed(() => tiers.find(t => t.name === selectedTier.value))
@@ -180,7 +213,7 @@ const currentCurrency = computed(() => ({'GH': 'GHS', 'NG': 'NGN', 'KE': 'KES'}[
 const marketName = computed(() => ({'GH': 'Ghana', 'NG': 'Nigeria', 'KE': 'Kenya'}[form.country]))
 
 const customTotal = computed(() => {
-  return selectedItems.value.reduce((sum, item) => sum + Number(item.price), 0)
+  return selectedItems.value.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0)
 })
 
 const fetchInventory = async () => {
@@ -191,16 +224,22 @@ const fetchInventory = async () => {
     inventoryItems.value = data || []
 }
 
-const toggleItem = (item) => {
+const updateQuantity = (item, delta) => {
     const index = selectedItems.value.findIndex(i => i.id === item.id)
     if (index > -1) {
-        selectedItems.value.splice(index, 1)
-    } else {
-        selectedItems.value.push(item)
+        selectedItems.value[index].quantity += delta
+        if (selectedItems.value[index].quantity <= 0) {
+            selectedItems.value.splice(index, 1)
+        }
+    } else if (delta > 0) {
+        selectedItems.value.push({ ...item, quantity: delta })
     }
 }
 
-const isItemSelected = (id) => selectedItems.value.some(i => i.id === id)
+const getItemQuantity = (id) => {
+    const item = selectedItems.value.find(i => i.id === id)
+    return item ? item.quantity : 0
+}
 
 watch(() => form.country, () => {
     fetchInventory()
@@ -213,13 +252,13 @@ const handleSubscribe = async () => {
   loading.value = true
   
   try {
-    // 1. Create Profile
-    const { error: profileError } = await supabase.from('profiles').upsert({
+    // 1. Create/Upsert Profile
+    await supabase.from('profiles').upsert({
       whatsapp_id: form.whatsapp,
       full_name: form.name,
       address: form.address,
       country_code: form.country
-    }, { onConflict: 'whatsapp_id' }).select()
+    }, { onConflict: 'whatsapp_id' })
 
     const { data: profileData } = await supabase.from('profiles').select('id').eq('whatsapp_id', form.whatsapp).single()
     
@@ -232,11 +271,18 @@ const handleSubscribe = async () => {
             cycle_length: form.cycleLength,
             status: 'Active',
             country_code: form.country,
-            currency: currencyMap[form.country] || 'GHS'
+            currency: currencyMap[form.country] || 'GHS',
+            billing_cycle: form.cyclePreference,
+            nudge_buffer_days: form.cyclePreference === 'Quarterly' ? 14 : 7
         }
 
         if (selectedTier.value === 'Custom') {
-            subData.custom_items_json = selectedItems.value.map(i => ({ id: i.id, name: i.name, price: i.price }))
+            subData.custom_items_json = selectedItems.value.map(i => ({ 
+                id: i.id, 
+                name: i.name, 
+                price: i.price,
+                quantity: i.quantity 
+            }))
         }
 
         const { error: subError } = await supabase.from('subscriptions').insert(subData)
@@ -283,6 +329,52 @@ const handleSubscribe = async () => {
   color: var(--mera-primary);
   font-weight: 700;
   letter-spacing: 1px;
+}
+
+.narrow { max-width: 600px; margin-left: auto; margin-right: auto; }
+
+.cycle-pivot {
+    display: flex;
+    padding: 6px;
+    border-radius: 20px;
+    margin-bottom: 40px;
+}
+
+.pivot-btn {
+    flex: 1;
+    padding: 16px;
+    border-radius: 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.3s;
+    font-weight: 600;
+    color: var(--mera-text-muted);
+}
+
+.pivot-btn span { font-size: 11px; font-weight: 400; opacity: 0.7; }
+.pivot-btn.active { background: white; color: var(--mera-text); box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+.pivot-btn.stock-up.active { color: var(--mera-primary); }
+
+.tier-badge-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+
+.savings-tag {
+    background: #34c759;
+    color: white;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+}
+
+.featured-glow {
+    border-color: rgba(255, 77, 148, 0.3) !important;
+    background: rgba(255, 77, 148, 0.03) !important;
+    box-shadow: 0 10px 40px rgba(255, 77, 148, 0.08) !important;
 }
 
 h1 { font-size: 40px; margin: 12px 0; }
@@ -362,12 +454,40 @@ h2 { font-size: 32px; margin: 12px 0; }
 .item-name { font-size: 14px; font-weight: 500; }
 .item-price { font-size: 12px; color: var(--mera-text-muted); }
 
-.item-action { font-size: 12px; font-weight: 700; color: var(--mera-primary); }
+.item-action { font-size: 12px; font-weight: 700; color: var(--mera-primary); cursor: pointer; }
 
-.builder-footer {
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid var(--mera-border);
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--mera-border);
+}
+
+.qty-btn {
+    border: none;
+    background: none;
+    color: var(--mera-primary);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.qty-btn:hover { transform: scale(1.2); }
+
+.qty-count {
+    font-size: 14px;
+    font-weight: 700;
+    min-width: 16px;
+    text-align: center;
 }
 
 .total-bar {

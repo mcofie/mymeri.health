@@ -22,6 +22,7 @@
             <tr>
               <th>Subscriber</th>
               <th>Tier</th>
+              <th>Cycle</th>
               <th>Location</th>
               <th>Next Nudge</th>
               <th>Status</th>
@@ -43,8 +44,14 @@
                 <span class="tier-badge">{{ sub.box_tier }}</span>
                 <div v-if="sub.box_tier === 'Custom' && sub.custom_items_json" class="custom-items-list">
                   <span v-for="item in sub.custom_items_json" :key="item.id" class="item-tag">
-                    {{ item.name }}
+                    {{ item.name }} <span v-if="item.quantity > 1" class="qty-mult">x{{ item.quantity }}</span>
                   </span>
+                </div>
+              </td>
+              <td>
+                <div class="cycle-cell">
+                  <span class="cycle-text">{{ sub.billing_cycle }}</span>
+                  <span v-if="sub.billing_cycle === 'Quarterly'" class="buffer-badge">14d Buffer</span>
                 </div>
               </td>
               <td>
@@ -239,6 +246,26 @@ onMounted(fetchSubscriptions)
   padding: 1px 6px;
   border-radius: 4px;
   white-space: nowrap;
+}
+
+.cycle-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cycle-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.buffer-badge {
+  font-size: 10px;
+  background: rgba(142, 85, 233, 0.1);
+  color: var(--mera-accent);
+  padding: 1px 6px;
+  border-radius: 4px;
+  width: fit-content;
 }
 
 .nudge-date { color: var(--mera-accent); font-weight: 500; }
