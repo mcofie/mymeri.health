@@ -28,6 +28,8 @@ Deno.serve(async (req: Request) => {
             throw new Error('Subscription ID is required')
         }
 
+        console.log(`Searching for subscription: ${subscription_id}`)
+
         // Fetch subscription and profile details
         const { data: sub, error: subError } = await supabase
             .from('subscriptions')
@@ -38,9 +40,17 @@ Deno.serve(async (req: Request) => {
                 profiles (whatsapp_id, full_name, country_code)
             `)
             .eq('id', subscription_id)
-            .single()
+            .maybeSingle() // Use maybeSingle to avoid errors on 'not found' and handle it ourselves
 
-        if (subError || !sub) throw new Error('Subscription not found')
+        if (subError) {
+            console.error(`Database error fetching sub ${subscription_id}:`, subError.message)
+            throw new Error(`DB Error: ${subError.message}`)
+        }
+
+        if (!sub) {
+            console.error(`Subscription ${subscription_id} not found in mera.subscriptions table`)
+            throw new Error(`Subscription ${subscription_id} not found`)
+        }
 
         // Handle profile as object or single-item array
         const profile = Array.isArray(sub.profiles) ? sub.profiles[0] : sub.profiles
