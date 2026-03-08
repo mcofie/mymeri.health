@@ -1,11 +1,15 @@
 :root {
-    --mera-bg: #0a0a0c;
-    --mera-card: #151518;
-    --mera-border: rgba(255, 255, 255, 0.08);
-    --mera-text: #ffffff;
-    --mera-text-muted: #8e8e93;
+    /* Soft, Minimalist, Light Theme Palette */
+    --mera-bg: #fdfaf8;
+    /* Warm off-white */
+    --mera-card: #ffffff;
+    --mera-border: rgba(0, 0, 0, 0.05);
+    --mera-text: #1a1a1a;
+    --mera-text-muted: #737373;
     --mera-primary: #ff4d94;
+    /* Signature Pink */
     --mera-accent: #8e55e9;
+    --mera-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
     --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -30,12 +34,12 @@ h3 {
     letter-spacing: -0.02em;
 }
 
-/* Glassmorphism utility */
+/* Premium Card utility (replacing dark glass) */
 .glass {
-    background: rgba(21, 21, 24, 0.7);
-    backdrop-filter: blur(12px);
+    background: var(--mera-card);
     border: 1px solid var(--mera-border);
-    border-radius: 16px;
+    border-radius: 20px;
+    box-shadow: var(--mera-shadow);
 }
 
 .premium-gradient {
@@ -45,11 +49,25 @@ h3 {
     -webkit-text-fill-color: transparent;
 }
 
-/* Transition for hover effects */
+/* Hover effects */
 .hover-scale {
-    transition: transform 0.2s ease-in-out;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .hover-scale:hover {
-    transform: scale(1.02);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+}
+
+/* Global Button Styles */
+.btn-primary-sm {
+    background: var(--mera-primary);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
 }

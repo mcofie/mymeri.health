@@ -87,7 +87,7 @@ label {
 }
 
 input {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.02);
   border: 1px solid var(--mera-border);
   border-radius: 12px;
   padding: 12px 16px;

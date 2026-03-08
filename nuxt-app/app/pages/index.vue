@@ -146,7 +146,7 @@
   left: 0;
   right: 0;
   z-index: 100;
-  background: rgba(18, 18, 18, 0.7);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--mera-border);
   padding: 16px 0;
@@ -335,8 +335,8 @@ h1 {
 }
 
 .active-glow {
-  box-shadow: 0 0 60px rgba(142, 85, 233, 0.1);
-  border-color: rgba(142, 85, 233, 0.3);
+  box-shadow: 0 0 60px rgba(142, 85, 233, 0.05);
+  border-color: rgba(142, 85, 233, 0.2);
 }
 
 .tiers-preview {
@@ -395,8 +395,8 @@ h1 {
 }
 
 .featured {
-  background: rgba(255, 77, 148, 0.03);
-  border-color: rgba(255, 77, 148, 0.3);
+  background: rgba(255, 77, 148, 0.02);
+  border-color: rgba(255, 77, 148, 0.2);
   transform: scale(1.05);
 }
 

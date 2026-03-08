@@ -225,8 +225,8 @@ h2 { font-size: 32px; margin: 12px 0; }
 }
 
 .tier-pill.active {
-  background: rgba(255, 77, 148, 0.05);
-  border-color: var(--mera-primary);
+  background: rgba(255, 77, 148, 0.02);
+  border-color: rgba(255, 77, 148, 0.2);
 }
 
 .tier-icon { font-size: 32px; }
@@ -261,7 +261,7 @@ h2 { font-size: 32px; margin: 12px 0; }
 }
 
 .price-bubble {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.02);
   padding: 4px 12px;
   border-radius: 12px;
   font-weight: 700;
@@ -306,7 +306,7 @@ h2 { font-size: 32px; margin: 12px 0; }
 label { font-size: 13px; color: var(--mera-text-muted); }
 
 .glass-input {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.02);
   border: 1px solid var(--mera-border);
   padding: 14px 18px;
   border-radius: 14px;
@@ -337,7 +337,7 @@ textarea.glass-input { height: 100px; resize: none; }
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.8);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
