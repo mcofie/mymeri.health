@@ -83,7 +83,7 @@ nav {
 }
 
 .nav-item.active, .nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.03);
   color: var(--mera-text);
 }
 
@@ -131,7 +131,7 @@ nav {
 }
 
 .user-profile:hover {
-  background: rgba(255, 59, 48, 0.1);
+  background: rgba(255, 59, 48, 0.05);
   border-color: rgba(255, 59, 48, 0.2);
 }
 
@@ -139,7 +139,9 @@ nav {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--mera-primary), var(--mera-accent));
+  background: var(--mera-card);
+  border: 1px solid var(--mera-border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
 }
 
 .user-meta {
