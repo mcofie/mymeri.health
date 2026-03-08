@@ -8,6 +8,11 @@ export default defineNuxtConfig({
       login: '/login',
       callback: '/confirm',
       exclude: ['/', '/subscribe'], // Exclude landing and subscribe pages
+    },
+    clientOptions: {
+      db: {
+        schema: 'mera'
+      }
     }
   },
   css: ['~/assets/css/main.css']

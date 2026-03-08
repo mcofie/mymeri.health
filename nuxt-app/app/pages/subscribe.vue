@@ -156,15 +156,19 @@ const handleSubscribe = async () => {
     const { data: profileData } = await supabase.from('profiles').select('id').eq('whatsapp_id', form.whatsapp).single()
     
     if (profileData) {
+        const currencyMap = { 'GH': 'GHS', 'NG': 'NGN', 'KE': 'KES' }
         const { error: subError } = await supabase.from('subscriptions').insert({
             user_id: profileData.id,
             box_tier: selectedTier.value,
             last_period_date: form.lastDate,
             cycle_length: form.cycleLength,
-            status: 'Active'
+            status: 'Active',
+            country_code: form.country,
+            currency: currencyMap[form.country] || 'GHS'
         })
         
         if (!subError) success.value = true
+        else console.error('Sub Error:', subError)
     }
   } catch (e) {
     console.error(e)

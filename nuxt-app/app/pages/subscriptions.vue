@@ -50,6 +50,10 @@
               <td><span class="status-pill" :class="sub.status.toLowerCase()">{{ sub.status }}</span></td>
               <td>
                 <div class="table-actions">
+                  <button class="nudge-btn glass" @click="initiateNudge(sub)" :disabled="nudgingId === sub.id" title="Send WhatsApp Nudge">
+                    <span v-if="nudgingId === sub.id">⏳</span>
+                    <span v-else>🔔 Nudge</span>
+                  </button>
                   <button class="icon-btn" @click="editProfile(sub.profiles)" title="Edit Details">📝</button>
                   <NuxtLink to="/messages" class="icon-btn" title="Message">💬</NuxtLink>
                 </div>
@@ -92,6 +96,8 @@ const totalCount = computed(() => subscriptions.value.length)
 const showEditModal = ref(false)
 const editingUser = ref(null)
 
+const nudgingId = ref(null)
+
 const fetchSubscriptions = async () => {
     const { data } = await supabase
         .from('subscriptions')
@@ -102,6 +108,23 @@ const fetchSubscriptions = async () => {
         .order('next_period_date', { ascending: true })
     
     subscriptions.value = data || []
+}
+
+const initiateNudge = async (sub) => {
+  nudgingId.value = sub.id
+  try {
+    const { data, error } = await supabase.functions.invoke('manual-nudge', {
+      body: { subscription_id: sub.id }
+    })
+    
+    if (error) throw error
+    alert(`Nudge sent to ${sub.profiles.full_name}!`)
+  } catch (err) {
+    console.error('Nudge Error:', err)
+    alert('Failed to send nudge. Check console for details.')
+  } finally {
+    nudgingId.value = null
+  }
 }
 
 const editProfile = (profile) => {
@@ -205,6 +228,27 @@ onMounted(fetchSubscriptions)
 .status-pill.active { background: rgba(52, 199, 89, 0.1); color: #34c759; }
 
 .table-actions { display: flex; gap: 12px; }
+.nudge-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mera-primary);
+  border: 1px solid var(--mera-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nudge-btn:hover:not(:disabled) {
+  background: var(--mera-primary);
+  color: white;
+}
+
+.nudge-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
 .icon-btn { cursor: pointer; background: none; border: none; font-size: 16px; text-decoration: none; }
 
 /* Modal Styles */
