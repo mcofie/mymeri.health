@@ -1,0 +1,55 @@
+:root {
+    --mera-bg: #0a0a0c;
+    --mera-card: #151518;
+    --mera-border: rgba(255, 255, 255, 0.08);
+    --mera-text: #ffffff;
+    --mera-text-muted: #8e8e93;
+    --mera-primary: #ff4d94;
+    --mera-accent: #8e55e9;
+    --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--mera-bg);
+    color: var(--mera-text);
+    font-family: var(--font-inter);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+}
+
+h1,
+h2,
+h3 {
+    font-weight: 500;
+    letter-spacing: -0.02em;
+}
+
+/* Glassmorphism utility */
+.glass {
+    background: rgba(21, 21, 24, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--mera-border);
+    border-radius: 16px;
+}
+
+.premium-gradient {
+    background: linear-gradient(135deg, var(--mera-primary), var(--mera-accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Transition for hover effects */
+.hover-scale {
+    transition: transform 0.2s ease-in-out;
+}
+
+.hover-scale:hover {
+    transform: scale(1.02);
+}
