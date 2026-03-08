@@ -11,7 +11,7 @@
 const user = useSupabaseUser()
 watch(user, () => {
   if (user.value) {
-    navigateTo('/')
+    navigateTo('/admin')
   }
 }, { immediate: true })
 </script>

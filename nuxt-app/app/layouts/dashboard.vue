@@ -5,7 +5,7 @@
         <h1 class="premium-gradient">MyMeri</h1>
       </div>
       <nav>
-        <NuxtLink to="/" class="nav-item" active-class="active">Overview</NuxtLink>
+        <NuxtLink to="/admin" class="nav-item" active-class="active">Overview</NuxtLink>
         <NuxtLink to="/subscriptions" class="nav-item" active-class="active">Subscriptions</NuxtLink>
         <NuxtLink to="/orders" class="nav-item" active-class="active">Orders</NuxtLink>
         <NuxtLink to="/inventory" class="nav-item" active-class="active">Inventory</NuxtLink>

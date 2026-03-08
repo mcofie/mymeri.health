@@ -44,7 +44,7 @@ const handleLogin = async () => {
     error.value = authError.message
     loading.value = false
   } else {
-    navigateTo('/')
+    navigateTo('/admin')
   }
 }
 </script>
