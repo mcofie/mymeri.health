@@ -61,6 +61,14 @@ Deno.serve(async (req: Request) => {
 
         console.log('WhatsApp send result:', JSON.stringify(result))
 
+        // Log the message in our internal chat history
+        await supabase.from('messages').insert({
+            whatsapp_id: profile.whatsapp_id,
+            direction: 'OUTBOUND',
+            content: `Sent manual nudge: Welcome to your cycle care!`,
+            metadata: { type: 'manual_nudge', template: 'pulse_check' }
+        })
+
         return new Response(JSON.stringify({
             message: 'Manual nudge sent successfully',
             recipient: profile.full_name,

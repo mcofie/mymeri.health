@@ -24,13 +24,49 @@
             <div class="tier-icon">{{ tier.icon }}</div>
             <div class="tier-info">
               <h3>{{ tier.name }}</h3>
-              <p>{{ tier.price[form.country] }} / Mo</p>
+              <p>{{ tier.price[form.country] }} {{ tier.name !== 'Custom' ? '/ Mo' : '' }}</p>
             </div>
             <div class="check-circle" v-if="selectedTier === tier.name">✓</div>
           </div>
         </div>
 
-        <div class="selected-tier-details glass" v-if="currentTier">
+        <!-- Custom Item Selection (A La Carte) -->
+        <div v-if="selectedTier === 'Custom'" class="custom-builder glass animate-fade-in">
+          <header class="builder-header">
+            <h3>Custom Box Builder</h3>
+            <p class="text-muted">Available in {{ marketName }}</p>
+          </header>
+          
+          <div class="item-grid">
+            <div 
+              v-for="item in inventoryItems" 
+              :key="item.id" 
+              class="inventory-item" 
+              :class="{ selected: isItemSelected(item.id) }"
+              @click="toggleItem(item)"
+            >
+              <div class="item-meta">
+                <span class="item-name">{{ item.name }}</span>
+                <span class="item-price">{{ item.currency }} {{ item.price }}</span>
+              </div>
+              <div class="item-action">
+                {{ isItemSelected(item.id) ? 'Added ✓' : '+ Add' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="builder-footer" v-if="selectedItems.length > 0">
+            <div class="total-bar">
+              <span>Your Custom Total:</span>
+              <strong>{{ currentCurrency }} {{ customTotal }}</strong>
+            </div>
+          </div>
+          <div v-else class="empty-builder">
+            <p>Select items below to build your tailored box.</p>
+          </div>
+        </div>
+
+        <div class="selected-tier-details glass" v-if="currentTier && selectedTier !== 'Custom'">
           <div class="detail-header">
             <h4>Included in {{ currentTier.name }} Box:</h4>
             <span class="price-bubble">{{ currentTier.price[form.country] }}</span>
@@ -92,8 +128,9 @@
               <label for="discreet">I would like Discreet Packaging (plain box, no branding) 🤫</label>
             </div>
 
-            <button type="submit" class="btn-submit pink-glow" :disabled="loading">
+            <button type="submit" class="btn-submit pink-glow" :disabled="loading || (selectedTier === 'Custom' && selectedItems.length === 0)">
               <span v-if="loading">Finalizing...</span>
+              <span v-else-if="selectedTier === 'Custom' && selectedItems.length === 0">Add Items to Continue</span>
               <span v-else>Confirm Subscription & Get My Link</span>
             </button>
           </form>
@@ -118,11 +155,14 @@ const supabase = useSupabaseClient()
 const loading = ref(false)
 const success = ref(false)
 const selectedTier = ref('Comfort')
+const inventoryItems = ref([])
+const selectedItems = ref([])
 
 const tiers = [
   { name: 'Essential', icon: '🌸', price: { GH: 'GHS 120', NG: 'NGN 2500', KE: 'KES 850' }, features: ['Premium Eco-Pads (12ct)', 'WhatsApp Cycle Tracking', 'Standard Packaging'] },
   { name: 'Comfort', icon: '✨', price: { GH: 'GHS 200', NG: 'NGN 4500', KE: 'KES 1500' }, features: ['Essential + Night Pads', 'Cramp Relief Tea', 'Artisanal Dark Chocolate', 'Priority Packaging'] },
-  { name: 'Eco Premium', icon: '🌿', price: { GH: 'GHS 350', NG: 'NGN 8000', KE: 'KES 2800' }, features: ['Everything in Comfort', 'Organic Cotton Liners', 'Lavender Heat Patches', 'Reusable Period Underwear'] }
+  { name: 'Eco Premium', icon: '🌿', price: { GH: 'GHS 350', NG: 'NGN 8000', KE: 'KES 2800' }, features: ['Everything in Comfort', 'Organic Cotton Liners', 'Lavender Heat Patches', 'Reusable Period Underwear'] },
+  { name: 'Custom', icon: '🎨', price: { GH: 'Tailor Your Own', NG: 'Tailor Your Own', KE: 'Tailor Your Own' }, features: ['Pick items individually', 'Pay based on selection', 'Full flexibility'] }
 ]
 
 const form = reactive({
@@ -136,15 +176,44 @@ const form = reactive({
 })
 
 const currentTier = computed(() => tiers.find(t => t.name === selectedTier.value))
+const currentCurrency = computed(() => ({'GH': 'GHS', 'NG': 'NGN', 'KE': 'KES'}[form.country]))
+const marketName = computed(() => ({'GH': 'Ghana', 'NG': 'Nigeria', 'KE': 'Kenya'}[form.country]))
+
+const customTotal = computed(() => {
+  return selectedItems.value.reduce((sum, item) => sum + Number(item.price), 0)
+})
+
+const fetchInventory = async () => {
+    const { data } = await supabase
+        .from('inventory')
+        .select('*')
+        .eq('country_code', form.country)
+    inventoryItems.value = data || []
+}
+
+const toggleItem = (item) => {
+    const index = selectedItems.value.findIndex(i => i.id === item.id)
+    if (index > -1) {
+        selectedItems.value.splice(index, 1)
+    } else {
+        selectedItems.value.push(item)
+    }
+}
+
+const isItemSelected = (id) => selectedItems.value.some(i => i.id === id)
+
+watch(() => form.country, () => {
+    fetchInventory()
+    selectedItems.value = [] // Reset on country change
+})
+
+onMounted(fetchInventory)
 
 const handleSubscribe = async () => {
   loading.value = true
   
   try {
-    // 1. In a headless environment, we'd use a service role to create the profile
-    // For this flow, we'll try to insert a profile (assuming RLS allows or handled via a function)
-    const profileId = crypto.randomUUID()
-    
+    // 1. Create Profile
     const { error: profileError } = await supabase.from('profiles').upsert({
       whatsapp_id: form.whatsapp,
       full_name: form.name,
@@ -152,12 +221,11 @@ const handleSubscribe = async () => {
       country_code: form.country
     }, { onConflict: 'whatsapp_id' }).select()
 
-    // 2. We'd fetch the id from the inserted profile. For now, we simulate.
     const { data: profileData } = await supabase.from('profiles').select('id').eq('whatsapp_id', form.whatsapp).single()
     
     if (profileData) {
         const currencyMap = { 'GH': 'GHS', 'NG': 'NGN', 'KE': 'KES' }
-        const { error: subError } = await supabase.from('subscriptions').insert({
+        const subData = {
             user_id: profileData.id,
             box_tier: selectedTier.value,
             last_period_date: form.lastDate,
@@ -165,7 +233,13 @@ const handleSubscribe = async () => {
             status: 'Active',
             country_code: form.country,
             currency: currencyMap[form.country] || 'GHS'
-        })
+        }
+
+        if (selectedTier.value === 'Custom') {
+            subData.custom_items_json = selectedItems.value.map(i => ({ id: i.id, name: i.name, price: i.price }))
+        }
+
+        const { error: subError } = await supabase.from('subscriptions').insert(subData)
         
         if (!subError) success.value = true
         else console.error('Sub Error:', subError)
@@ -188,6 +262,9 @@ const handleSubscribe = async () => {
 .simple-nav {
   padding: 24px;
 }
+
+.logo { font-size: 24px; font-weight: 700; text-decoration: none; color: var(--mera-text); }
+.dot { color: var(--mera-primary); }
 
 .subscribe-container {
   max-width: 800px;
@@ -250,6 +327,57 @@ h2 { font-size: 32px; margin: 12px 0; }
   justify-content: center;
   font-size: 14px;
 }
+
+/* Custom Builder Styles */
+.custom-builder {
+    padding: 32px;
+    border-radius: 32px;
+    margin-bottom: 80px;
+}
+
+.builder-header { margin-bottom: 24px; }
+.builder-header h3 { font-size: 20px; margin-bottom: 4px; }
+
+.item-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.inventory-item {
+    padding: 16px 20px;
+    border: 1px solid var(--mera-border);
+    border-radius: 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.inventory-item:hover { border-color: var(--mera-primary); }
+.inventory-item.selected { background: rgba(255, 77, 148, 0.02); border-color: var(--mera-primary); }
+
+.item-meta { display: flex; flex-direction: column; }
+.item-name { font-size: 14px; font-weight: 500; }
+.item-price { font-size: 12px; color: var(--mera-text-muted); }
+
+.item-action { font-size: 12px; font-weight: 700; color: var(--mera-primary); }
+
+.builder-footer {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--mera-border);
+}
+
+.total-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+}
+
+.empty-builder { text-align: center; padding: 40px; color: var(--mera-text-muted); font-size: 14px; }
 
 .selected-tier-details {
   padding: 32px;
@@ -338,6 +466,8 @@ textarea.glass-input { height: 100px; resize: none; }
   cursor: pointer;
 }
 
+.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -363,7 +493,7 @@ textarea.glass-input { height: 100px; resize: none; }
 
 /* Mobile Adjustments */
 @media (max-width: 768px) {
-  .input-row, .feature-list {
+  .input-row, .feature-list, .item-grid {
     grid-template-columns: 1fr;
   }
   
@@ -379,4 +509,11 @@ textarea.glass-input { height: 100px; resize: none; }
 
   .price-bubble { font-size: 14px; }
 }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in { animation: fadeIn 0.4s ease forwards; }
 </style>

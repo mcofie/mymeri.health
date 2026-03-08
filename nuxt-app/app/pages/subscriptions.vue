@@ -39,7 +39,14 @@
                   </div>
                 </div>
               </td>
-              <td><span class="tier-badge">{{ sub.box_tier }}</span></td>
+              <td>
+                <span class="tier-badge">{{ sub.box_tier }}</span>
+                <div v-if="sub.box_tier === 'Custom' && sub.custom_items_json" class="custom-items-list">
+                  <span v-for="item in sub.custom_items_json" :key="item.id" class="item-tag">
+                    {{ item.name }}
+                  </span>
+                </div>
+              </td>
               <td>
                 <div class="location-cell">
                   <a v-if="sub.profiles?.google_maps_link" :href="sub.profiles.google_maps_link" target="_blank" class="map-icon" title="View Map">📍</a>
@@ -215,6 +222,23 @@ onMounted(fetchSubscriptions)
     padding: 2px 10px;
     border-radius: 6px;
     font-size: 12px;
+}
+
+.custom-items-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+  max-width: 200px;
+}
+
+.item-tag {
+  font-size: 10px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--mera-text-muted);
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 
 .nudge-date { color: var(--mera-accent); font-weight: 500; }
