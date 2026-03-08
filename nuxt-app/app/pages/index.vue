@@ -1,11 +1,20 @@
+<script setup>
+useSeoMeta({
+  title: 'Period Care on Autopilot',
+  ogTitle: 'Period Care on Autopilot',
+  description: 'End the pharmacy dash. Secure your medical-grade period essentials with smart, automated delivery. Pan-African wellness delivered with dignity.',
+  ogDescription: 'End the pharmacy dash. Secure your medical-grade period essentials with smart, automated delivery. Pan-African wellness delivered with dignity.',
+  ogImage: '/og-image.png',
+  twitterCard: 'summary_large_image',
+})
+</script>
+
 <template>
   <div class="landing-page">
-    <nav class="glass-nav">
-      <div class="container">
-        <div class="logo">MyMeri<span class="dot">.</span></div>
-        <div class="nav-links">
-          <NuxtLink to="/subscribe" class="btn-primary-sm glass">Get Started</NuxtLink>
-        </div>
+    <nav class="simple-nav">
+      <NuxtLink to="/" class="logo">MyMeri<span class="dot">.</span></NuxtLink>
+      <div class="nav-links">
+        <NuxtLink to="/subscribe" class="btn-primary-sm pink-glow">Secure My Stash</NuxtLink>
       </div>
     </nav>
 
@@ -139,31 +148,26 @@
   padding: 0 24px;
 }
 
-.glass-nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--mera-border);
-  padding: 16px 0;
-}
-
-.glass-nav .container {
+.simple-nav {
+  padding: 16px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: sticky;
+  top: 0;
+  background: rgba(253, 252, 255, 0.95);
+  backdrop-filter: blur(20px);
+  z-index: 1000;
+  border-bottom: 1px solid rgba(0,0,0,0.03);
 }
 
-.logo {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -1px;
-}
-
+.logo { font-size: 18px; font-weight: 900; text-decoration: none; color: #1a1a1a; letter-spacing: -0.5px; }
 .dot { color: var(--mera-primary); }
+
+@media (min-width: 360px) {
+  .simple-nav { padding: 20px 24px; }
+  .logo { font-size: 20px; }
+}
 
 .nav-links {
   display: flex;
@@ -181,7 +185,7 @@
 .nav-item:hover { color: var(--mera-text); }
 
 .hero {
-  padding: 160px 0 100px;
+  padding: 120px 0 60px;
 }
 
 .mobile-stack {
@@ -452,9 +456,12 @@ h1 {
 }
 
 @media (max-width: 768px) {
+  .hero { padding: 100px 0 60px; }
+  
   .mobile-stack {
     grid-template-columns: 1fr;
     text-align: center;
+    gap: 40px;
   }
   
   .hero-content {
@@ -463,18 +470,31 @@ h1 {
     align-items: center;
   }
   
-  .hero-text { margin: 0 auto 32px; }
+  h1 { font-size: 42px; letter-spacing: -1.5px; }
+
+  .hero-text { margin: 0 auto 32px; font-size: 16px; }
   
   .hero-actions {
     flex-direction: column;
     width: 100%;
+    gap: 12px;
+  }
+
+  .btn-hero, .btn-secondary-hero {
+    width: 100%;
+    text-align: center;
+    padding: 16px 24px;
   }
   
-  .hero-image-wrapper { order: -1; margin-bottom: 40px; }
+  .hero-image-wrapper { order: -1; margin-bottom: 20px; }
   
   .feature-grid, .tier-grid {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
+
+  .section-header { margin-bottom: 40px; }
+  .section-header h2 { font-size: 32px; }
   
   .featured {
     transform: none;
@@ -486,8 +506,22 @@ h1 {
     bottom: 0;
     margin-top: 24px;
     justify-content: center;
+    padding: 20px;
+    gap: 16px;
   }
 
+  .stat-item strong { font-size: 20px; }
+  .stat-divider { height: 32px; }
+
+  .features, .tiers-preview { padding: 60px 0; }
+  .feature-card, .tier-card { padding: 32px 24px; border-radius: 24px; }
+
   .nav-links { display: none; }
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 36px; }
+  .container { padding: 0 20px; }
+  .footer-grid { flex-direction: column; gap: 40px; text-align: center; align-items: center; }
 }
 </style>

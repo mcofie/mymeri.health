@@ -11,9 +11,7 @@
 
 <script setup>
 // Mocking a toast system
-const toasts = ref([
-  { id: 1, message: 'Welcome to MyMeri Dashboard', type: 'info' }
-])
+const toasts = ref([])
 
 const remove = (id) => {
   toasts.value = toasts.value.filter(t => t.id !== id)

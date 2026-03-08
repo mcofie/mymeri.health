@@ -187,18 +187,8 @@
                 </div>
 
                 <div class="nexus-row">
-                   <div class="nexus-group">
-                      <label>
-                        Last Period Start Date
-                        <span class="info-tag" title="We use this to time your reminders exactly 7 days before your next flow.">? لماذا؟</span>
-                      </label>
-                      <div class="date-nexus glass-input">
-                        <input v-model="dateSegments.dd" type="number" placeholder="DD" min="1" max="31" class="d-segment" @input="nextOnMax($event, 2, 'mm')" />
-                        <span class="d-sep">/</span>
-                        <input v-model="dateSegments.mm" id="mm-input" type="number" placeholder="MM" min="1" max="12" class="d-segment" @input="nextOnMax($event, 2, 'yyyy')" />
-                        <span class="d-sep">/</span>
-                        <input v-model="dateSegments.yyyy" id="yyyy-input" type="number" placeholder="YYYY" min="2024" max="2026" class="d-segment-large" />
-                      </div>
+                   <div class="nexus-group full-width">
+                      <UiMeraDatePicker v-model="form.lastDate" />
                    </div>
                    <div class="nexus-group">
                       <label>Cycle Duration (Days)</label>
@@ -211,7 +201,7 @@
                    <textarea v-model="form.address" placeholder="Digital Address or landmarks..." class="nexus-input glass-input" required></textarea>
                 </div>
 
-                <div class="discreet-toggle glass">
+                <div class="discreet-toggle card-premium">
                    <input type="checkbox" id="discreet-box" v-model="form.is_discreet" />
                    <label for="discreet-box">
                       <strong>Discreet Packaging</strong>
@@ -320,6 +310,13 @@
 </template>
 
 <script setup>
+useSeoMeta({
+  title: 'Subscribe',
+  ogTitle: 'Subscribe',
+  description: 'Select your stash, pick your cycle, and never run out again. Custom and curated period boxes for your unique flow.',
+  ogDescription: 'Select your stash, pick your cycle, and never run out again. Custom and curated period boxes for your unique flow.',
+})
+
 const supabase = useSupabaseClient()
 const currentStep = ref(1)
 const loading = ref(false)
@@ -352,7 +349,6 @@ const form = reactive({
   cyclePreference: 'Monthly'
 })
 
-const dateSegments = reactive({ dd: '', mm: '', yyyy: '' })
 const localPhone = ref('')
 
 const isCustom = computed(() => selectedTier.value === 'Custom')
@@ -371,18 +367,6 @@ const handlePhoneInput = (e) => {
   localPhone.value = formatted.trim()
   form.whatsapp = currentPrefix.value + input
 }
-
-const nextOnMax = (e, max, nextId) => {
-  if (e.target.value.length >= max) {
-    document.getElementById(nextId)?.focus()
-  }
-}
-
-watch(dateSegments, () => {
-  if (dateSegments.dd && dateSegments.mm && dateSegments.yyyy) {
-    form.lastDate = `${dateSegments.yyyy}-${dateSegments.mm.padStart(2, '0')}-${dateSegments.dd.padStart(2, '0')}`
-  }
-})
 const filteredTiers = computed(() => tiers.filter(t => t.mode === form.cyclePreference || t.mode === 'Both'))
 const currentTier = computed(() => tiers.find(t => t.name === selectedTier.value))
 const tierPrice = computed(() => currentTier.value?.price[form.country] || '0')
@@ -569,9 +553,13 @@ h1 { font-size: 28px; font-weight: 900; margin-bottom: 8px; letter-spacing: -1px
 /* Step 1: Market Grid */
 .market-grid { 
   display: grid; 
-  grid-template-columns: repeat(3, 1fr); 
-  gap: 8px; 
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 12px; 
   margin-bottom: 32px; 
+}
+
+@media (min-width: 640px) {
+  .market-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
 }
 
 .selector-card { 
@@ -797,20 +785,63 @@ h1 { font-size: 28px; font-weight: 900; margin-bottom: 8px; letter-spacing: -1px
 .nexus-group label { font-size: 12px; font-weight: 700; color: #999; margin-bottom: 6px; }
 .glass-input { padding: 16px; border-radius: 16px; font-size: 16px; width: 100%; border: 1px solid #eee; background: rgba(255,255,255,0.5); }
 
-.discreet-toggle { padding: 16px 20px; border-radius: 18px; display: flex; gap: 14px; align-items: flex-start; }
-.discreet-toggle strong { font-size: 14px; font-weight: 800; display: block; }
-.discreet-toggle span { font-size: 12px; color: #777; }
+.discreet-toggle { 
+  display: flex !important;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px !important;
+  cursor: pointer;
+  background: white !important;
+}
 
-/* Segmented Inputs (Phone & Date) */
-.phone-nexus { display: flex; align-items: center; gap: 8px; cursor: text; }
-.p-prefix { font-weight: 800; color: #1a1a1a; font-size: 16px; border-right: 2px solid #eee; padding-right: 8px; }
-.phone-input { border: none; background: transparent; font-size: 16px; font-weight: 700; color: #1a1a1a; width: 100%; outline: none; }
+.discreet-toggle input {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: var(--mera-primary);
+}
 
-.date-nexus { display: flex; align-items: center; gap: 4px; }
-.d-segment { width: 32px; border: none; background: transparent; font-size: 16px; font-weight: 700; text-align: center; outline: none; -moz-appearance: textfield; }
-.d-segment::-webkit-inner-spin-button, .d-segment::-webkit-outer-spin-button { -webkit-appearance: none; }
-.d-segment-large { width: 52px; border: none; background: transparent; font-size: 16px; font-weight: 700; text-align: center; outline: none; }
-.d-sep { color: #ccc; font-weight: 700; }
+.discreet-toggle strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.discreet-toggle span {
+  font-size: 12px;
+  color: #777;
+  font-weight: 600;
+}
+
+.phone-nexus {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  cursor: text;
+}
+
+.p-prefix {
+  font-weight: 800;
+  color: #1a1a1a;
+  font-size: 16px;
+  padding-right: 12px;
+  border-right: 2px solid #eee;
+  flex-shrink: 0;
+}
+
+.phone-input {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #1a1a1a;
+  width: 100%;
+  outline: none !important;
+  box-shadow: none !important;
+}
 
 /* Bottom Nav Bar (Mobile Actions) */
 .flow-footer, .flow-footer-final { 
@@ -857,11 +888,11 @@ h1 { font-size: 28px; font-weight: 900; margin-bottom: 8px; letter-spacing: -1px
   gap: 20px;
 }
 
-.m-summary-meta { display: flex; flex-direction: column; gap: 2px; }
-.m-label { font-size: 11px; font-weight: 800; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+.m-summary-meta { display: flex; flex-direction: column; gap: 0px; }
+.m-label { font-size: 10px; font-weight: 800; color: #999; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1; }
 .m-total { display: flex; align-items: baseline; gap: 4px; }
-.m-curr { font-size: 13px; font-weight: 700; color: #777; }
-.m-val { font-size: 22px; font-weight: 950; color: var(--mera-primary); }
+.m-curr { font-size: 12px; font-weight: 700; color: #777; }
+.m-val { font-size: 20px; font-weight: 950; color: var(--mera-primary); line-height: 1.2; }
 
 .m-btn-prev {
   width: 44px;
@@ -916,6 +947,43 @@ h1 { font-size: 28px; font-weight: 900; margin-bottom: 8px; letter-spacing: -1px
 .success-card-nexus { width: 100%; max-width: 480px; padding: 40px 24px; text-align: center; border-radius: 32px; }
 .celebration { font-size: 60px; margin-bottom: 24px; }
 .btn-home { display: block; padding: 18px; border-radius: 40px; text-decoration: none; color: white; font-weight: 800; background: var(--mera-primary); margin-top: 24px; }
+
+@media (max-width: 768px) {
+  .subscribe-nexus { padding: 20px 16px 120px; }
+  
+  h1 { font-size: 32px; letter-spacing: -1px; }
+  .text-muted { font-size: 14px; }
+  
+  .selector-card { padding: 16px 8px; }
+  .market-flag { font-size: 24px; }
+  
+  .pivot-options { gap: 10px; }
+  .pivot-selector { padding: 16px; border-radius: 16px; }
+  .pivot-title { font-size: 15px; }
+  
+  .tier-row { padding: 16px; border-radius: 20px; }
+  .price-val { font-size: 18px; }
+  
+  .nexus-row { gap: 16px; }
+  .glass-input { padding: 14px; border-radius: 12px; font-size: 15px; }
+  
+  .calendar-wrapper { padding: 16px; border-radius: 16px; }
+  .day-cell { height: 40px; font-size: 14px; }
+  
+  .success-card-nexus { padding: 32px 20px; }
+  .celebration { font-size: 48px; }
+  
+  .trust-strip { padding: 24px 0; margin-top: 24px; flex-wrap: wrap; gap: 12px; }
+  .trust-item { font-size: 10px; }
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 28px; }
+  .m-summary-content { gap: 12px; }
+  .m-val { font-size: 18px; }
+  .m-btn-next { padding: 12px 20px; font-size: 14px; }
+  .market-grid { gap: 10px; }
+}
 
 /* Animations */
 @keyframes fadeIn {
