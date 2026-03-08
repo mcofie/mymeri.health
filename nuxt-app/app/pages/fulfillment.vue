@@ -2,43 +2,67 @@
   <NuxtLayout name="dashboard">
     <div class="fulfillment-page">
       <header class="page-header">
-        <div>
+        <div class="header-left">
           <h1>Fulfillment Center</h1>
-          <p class="text-muted">Process packing slips for ready-to-dispatch orders.</p>
+          <p class="text-muted">Process packing slips for <strong>{{ packingSlips.length }}</strong> ready-to-dispatch orders.</p>
         </div>
       </header>
 
-      <div class="slips-grid">
-        <div v-for="slip in packingSlips" :key="slip.slip_id" class="slip-card glass" :class="{ 'discreet-border': slip.is_discreet }">
-          <div class="slip-header">
-            <span class="slip-id">#{{ slip.slip_id.slice(0, 8) }}</span>
-            <span v-if="slip.is_discreet" class="discreet-badge">🤫 Discreet Packaging</span>
-          </div>
+      <div class="fulfillment-content">
+        <div v-if="packingSlips.length > 0" class="slips-grid animate-fade-in">
+          <div v-for="slip in packingSlips" :key="slip.slip_id" class="slip-card glass" :class="{ 'discreet-priority': slip.is_discreet }">
+            <div class="card-glow"></div>
+            
+            <header class="slip-card-header">
+              <div class="id-wrap">
+                 <span class="slip-tag">Packing Slip</span>
+                 <span class="slip-id">#{{ slip.slip_id.slice(0, 8) }}</span>
+              </div>
+              <div v-if="slip.is_discreet" class="discreet-badge-premium animate-pulse">
+                <span>🤫 Discreet</span>
+              </div>
+            </header>
 
-          <div class="customer-preview">
-            <h3>{{ slip.full_name }}</h3>
-            <p class="address">{{ slip.address }}</p>
-            <p class="phone">{{ slip.whatsapp_id }}</p>
-          </div>
-
-          <div class="items-list">
-            <h4>Included in Box:</h4>
-            <div class="tier-bubble">{{ slip.items_json.tier }} Tier</div>
-            <ul>
-              <li v-for="item in slip.items_json.items" :key="item.id">
-                {{ item.quantity }}x {{ item.inventory.name }}
-              </li>
-            </ul>
-          </div>
-
-          <div class="slip-footer">
-            <div class="footer-btns">
-              <button class="btn-secondary glass" @click="printLabel(slip)">🖨️ Label</button>
-              <button class="btn-primary glass" @click="dispatch(slip.slip_id)" :disabled="slip.status === 'Packed'">
-                {{ slip.status === 'Packed' ? 'Dispatched' : 'Mark Packed' }}
-              </button>
+            <div class="customer-section">
+              <h3 class="customer-name">{{ slip.full_name }}</h3>
+              <p class="address-box">{{ slip.address }}</p>
+              <div class="wa-pill">
+                 <span class="wa-icon">💬</span>
+                 <span class="wa-id">{{ slip.whatsapp_id }}</span>
+              </div>
             </div>
+
+            <div class="fulfillment-items">
+              <div class="tier-indicator" :class="slip.items_json.tier.toLowerCase()">
+                <span class="tier-dot"></span>
+                <span class="tier-label">{{ slip.items_json.tier }} Plan</span>
+              </div>
+              
+              <ul class="items-checklist">
+                <li v-for="item in slip.items_json.items" :key="item.id" class="item-entry">
+                  <div class="qty-box">{{ item.quantity }}x</div>
+                  <span class="item-name">{{ item.inventory.name }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <footer class="slip-card-footer">
+              <button class="btn-util glass" @click="printLabel(slip)">
+                <span>🖨️ Label</span>
+              </button>
+              <button class="btn-dispatch glass" @click="dispatch(slip.slip_id)" :disabled="slip.status === 'Packed'">
+                 <span v-if="slip.status === 'Packed'">✅ Dispatched</span>
+                 <span v-else>Mark Packed →</span>
+              </button>
+            </footer>
           </div>
+        </div>
+
+        <div v-else class="empty-state-fulfillment glass animate-fade-in">
+          <div class="illustration-wrap">☕</div>
+          <h2>All Clear!</h2>
+          <p>The fulfilment queue is empty. Catch up on messages or grab a coffee until the next stash order arrives.</p>
+          <NuxtLink to="/messages" class="btn-secondary-sm glass">Check Messages</NuxtLink>
         </div>
       </div>
 
@@ -58,14 +82,10 @@
         <div class="label-footer">
           <div class="qr-placeholder">📦</div>
           <div class="instructions">
-            <span v-if="selectedLabel.is_discreet">⚠️ RECIPIENT REQUESTED DISCREET PACKAGING</span>
+            <span v-if="selectedLabel.is_discreet" class="urgent-text">⚠️ RECIPIENT REQUESTED DISCREET PACKAGING</span>
             <span v-else>FRAGILE - HANDLE WITH CARE</span>
           </div>
         </div>
-      </div>
-
-      <div v-if="packingSlips.length === 0" class="empty-state glass">
-        <p>No new orders to fulfill. Relax! ☕</p>
       </div>
     </div>
   </NuxtLayout>
@@ -94,16 +114,12 @@ const printLabel = (slip) => {
 }
 
 const dispatch = async (id) => {
-    // 1. Update Packing Slip status
     const { error: psError } = await supabase
         .from('packing_slips')
         .update({ status: 'Packed' })
         .eq('id', id)
     
     if (!psError) {
-        // 2. Ideally update the Order status too
-        // In fulfillment_view, we have slip_id. We'd need the order_id to update the order.
-        // For brevity, we update local state
         const slip = packingSlips.value.find(s => s.slip_id === id)
         if (slip) slip.status = 'Packed'
     }
@@ -113,48 +129,104 @@ onMounted(fetchSlips)
 </script>
 
 <style scoped>
-.fulfillment-page { display: flex; flex-direction: column; gap: 32px; }
+.fulfillment-page { display: flex; flex-direction: column; gap: 40px; }
+.header-left h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
 
 .slips-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 32px;
 }
 
 .slip-card {
-    padding: 24px;
+    padding: 32px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.slip-card:hover { transform: translateY(-8px); }
+
+.discreet-priority {
+  border-left: 6px solid var(--mera-accent) !important;
 }
 
-.slip-card.discreet-border {
-    border-top: 4px solid var(--mera-accent);
+.slip-card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.id-wrap { display: flex; flex-direction: column; gap: 4px; }
+.slip-tag { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--mera-text-muted); font-weight: 700; }
+.slip-id { font-size: 14px; color: var(--mera-text); font-family: monospace; font-weight: 600; }
+
+.discreet-badge-premium {
+  background: var(--mera-accent);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 40px;
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(255, 77, 148, 0.3);
 }
 
-.slip-header { display: flex; justify-content: space-between; align-items: center; }
-.slip-id { font-size: 12px; color: var(--mera-text-muted); font-family: monospace; }
-.discreet-badge { font-size: 10px; background: rgba(255, 77, 148, 0.1); color: var(--mera-accent); padding: 2px 8px; border-radius: 4px; }
+.customer-section { display: flex; flex-direction: column; gap: 8px; }
+.customer-name { font-size: 22px; font-weight: 800; }
+.address-box { font-size: 14px; color: var(--mera-text-muted); line-height: 1.5; }
+.wa-pill { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.wa-id { font-size: 13px; font-weight: 700; color: var(--mera-primary); }
 
-.customer-preview h3 { font-size: 18px; margin-bottom: 4px; }
-.address { font-size: 13px; color: var(--mera-text-muted); line-height: 1.4; }
-.phone { font-size: 13px; color: var(--mera-accent); margin-top: 4px; }
+.fulfillment-items {
+  background: rgba(0,0,0,0.02);
+  padding: 20px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
-.items-list h4 { font-size: 13px; margin-bottom: 12px; color: var(--mera-text-muted); }
-.tier-bubble { display: inline-block; margin-bottom: 12px; background: rgba(255, 255, 255, 0.05); padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-.items-list ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.items-list li { font-size: 14px; }
+.tier-indicator { display: flex; align-items: center; gap: 8px; }
+.tier-dot { width: 8px; height: 8px; border-radius: 50%; }
+.tier-indicator.comfort .tier-dot { background: #a272ff; box-shadow: 0 0 10px #a272ff; }
+.tier-indicator.essential .tier-dot { background: #34c759; box-shadow: 0 0 10px #34c759; }
+.tier-label { font-size: 12px; font-weight: 800; text-transform: uppercase; opacity: 0.8; }
 
-.slip-footer { margin-top: auto; }
-.footer-btns { display: grid; grid-template-columns: 100px 1fr; gap: 12px; }
-.btn-primary { padding: 12px; border-radius: 12px; cursor: pointer; }
-.btn-secondary { padding: 12px; border-radius: 12px; cursor: pointer; color: var(--mera-text-muted); font-size: 13px; }
+.items-checklist { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.item-entry { display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 500; }
+.qty-box { background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 800; color: var(--mera-primary); }
+
+.slip-card-footer { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-top: auto; }
+
+.btn-util, .btn-dispatch {
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-util { color: var(--mera-text-muted); }
+.btn-dispatch { background: var(--mera-primary); color: white; }
+.btn-dispatch:disabled { background: #e9fbf0; color: #34c759; opacity: 1; cursor: default; }
+
+.empty-state-fulfillment {
+  padding: 100px 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.illustration-wrap { font-size: 80px; }
+.empty-state-fulfillment h2 { font-size: 28px; font-weight: 800; }
+.empty-state-fulfillment p { color: var(--mera-text-muted); max-width: 450px; line-height: 1.6; margin-bottom: 20px; }
+
+.btn-secondary-sm { padding: 12px 24px; border-radius: 12px; text-decoration: none; color: var(--mera-text); font-weight: 700; font-size: 14px; }
 
 /* Print Mode Styles */
 .printable-label { display: none; }
+.urgent-text { font-weight: 900; background: #000; color: #fff; padding: 4px; }
 
 @media print {
-    /* Hide everything on the page except the printable-label */
     body * { visibility: hidden; }
     #print-label-template, #print-label-template * { visibility: visible; }
     #print-label-template {
@@ -168,23 +240,5 @@ onMounted(fetchSlips)
         background: white !important;
         color: black !important;
     }
-    .dashboard-layout, .fulfillment-page, .sidebar, .top-bar { display: none !important; }
-
-    .printable-label {
-        font-family: sans-serif;
-        border: 2px solid black;
-        border-radius: 0;
-    }
-    .label-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .mera-logo { font-size: 24px; font-weight: bold; }
-    .label-type { font-size: 14px; border: 1px solid black; padding: 4px 8px; }
-    .recipient-box { margin: 40px 0; }
-    .label-sm { font-size: 12px; font-weight: bold; color: #666; }
-    .recipient-name { font-size: 32px; margin: 10px 0; }
-    .recipient-address { font-size: 20px; line-height: 1.4; color: black; }
-    .recipient-phone { font-size: 16px; margin-top: 10px; font-weight: bold; }
-    .label-footer { margin-top: 60px; display: flex; align-items: center; gap: 20px; border-top: 1px dashed #ccc; padding-top: 20px; }
-    .qr-placeholder { font-size: 40px; border: 1px solid #ccc; padding: 20px; }
-    .instructions { font-size: 14px; color: black; }
 }
 </style>

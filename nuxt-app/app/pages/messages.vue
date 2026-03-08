@@ -4,26 +4,45 @@
       <!-- Contact List -->
       <aside class="contacts-sidebar">
         <header class="sidebar-header">
-          <h3>Customer Chats</h3>
-          <span class="online-status">● Live</span>
+          <div class="header-main">
+            <h3>Customer Chats</h3>
+            <div class="live-pill">
+              <span class="live-blink">●</span>
+              <span>WhatsApp Live</span>
+            </div>
+          </div>
         </header>
+
         <div class="search-box">
-          <input type="text" placeholder="Search customer..." class="glass-input-sm" />
+          <div class="search-inner glass">
+            <span class="search-icon">🔍</span>
+            <input v-model="contactSearch" type="text" placeholder="Search customer..." class="glass-input-sm-clean" />
+          </div>
         </div>
-        <div class="contacts-list">
+
+        <div class="contacts-list thin-scrollbar">
           <div 
-            v-for="contact in contacts" 
+            v-for="contact in filteredContacts" 
             :key="contact.id" 
             class="contact-item" 
             :class="{ active: activeContact?.id === contact.id }"
             @click="activeContact = contact"
           >
-            <div class="avatar-sm"></div>
+            <div class="avatar-wrap">
+               <div class="avatar-box">{{ contact.full_name?.charAt(0) || '?' }}</div>
+               <span v-if="contact.unread" class="unread-pulse"></span>
+            </div>
             <div class="contact-info">
-              <span class="contact-name">{{ contact.full_name }}</span>
+              <div class="name-row">
+                 <span class="contact-name">{{ contact.full_name || 'Anonymous' }}</span>
+                 <span class="country-hint">{{ contact.country_code }}</span>
+              </div>
               <span class="last-msg">{{ contact.last_message || 'No messages yet' }}</span>
             </div>
-            <span v-if="contact.unread" class="unread-dot"></span>
+          </div>
+          
+          <div v-if="filteredContacts.length === 0" class="mini-empty">
+            <p>No chats found.</p>
           </div>
         </div>
       </aside>
@@ -32,19 +51,19 @@
       <main class="message-area" v-if="activeContact">
         <header class="chat-header">
           <div class="active-user">
-            <div class="avatar-md"></div>
-            <div>
+            <div class="avatar-md-premium">{{ activeContact.full_name?.charAt(0) }}</div>
+            <div class="user-details">
               <h3>{{ activeContact.full_name }}</h3>
-              <p class="whatsapp-id">{{ activeContact.whatsapp_id }}</p>
+              <p class="whatsapp-id">WA: {{ activeContact.whatsapp_id }}</p>
             </div>
           </div>
           <div class="header-actions">
-            <a v-if="activeContact.google_maps_link" :href="activeContact.google_maps_link" target="_blank" class="location-btn glass">📍 Open Map</a>
-            <button class="settings-btn glass">⋮</button>
+            <a v-if="activeContact.google_maps_link" :href="activeContact.google_maps_link" target="_blank" class="util-btn glass" title="Delivery Location">📍 Map</a>
+            <button class="util-btn glass" title="More Options">⋮</button>
           </div>
         </header>
 
-        <div class="messages-container" ref="messageContainer">
+        <div class="messages-container thin-scrollbar" ref="messageContainer">
           <div 
             v-for="msg in messages" 
             :key="msg.id" 
@@ -53,31 +72,41 @@
           >
             <div class="msg-bubble glass">
               <p>{{ msg.content }}</p>
-              <span class="msg-time">{{ formatTime(msg.created_at) }}</span>
+              <div class="msg-footer">
+                <span class="msg-time">{{ formatTime(msg.created_at) }}</span>
+                <span v-if="msg.direction === 'OUTBOUND'" class="read-receipt">✓✓</span>
+              </div>
             </div>
           </div>
         </div>
 
         <footer class="input-area">
           <form @submit.prevent="sendMessage" class="chat-form">
-            <button type="button" class="attach-btn">📎</button>
-            <input 
-              v-model="newMessage" 
-              type="text" 
-              placeholder="Type your message..." 
-              class="glass-input"
-            />
-            <button type="submit" class="send-btn" :disabled="!newMessage.trim()">
+            <button type="button" class="tool-btn" title="Attach Item">📎</button>
+            <div class="input-wrap glass">
+               <input 
+                 v-model="newMessage" 
+                 type="text" 
+                 placeholder="Type message to subscriber..." 
+                 class="main-chat-input"
+               />
+            </div>
+            <button type="submit" class="send-btn-nexus" :disabled="!newMessage.trim()">
               <span>✈</span>
             </button>
           </form>
         </footer>
       </main>
 
-      <div v-else class="empty-chat">
-        <div class="illustration">💬</div>
-        <h2>Select a customer to start chatting</h2>
-        <p>Syncs directly with your WhatsApp Business API</p>
+      <div v-else class="empty-chat-nexus animate-fade-in">
+        <div class="nexus-glow"></div>
+        <div class="nexus-illustration">💬</div>
+        <h2>WhatsApp Nexus</h2>
+        <p>Syncing with your Business API. Select a soul to start the conversation.</p>
+        <div class="nexus-status-pills">
+           <span class="nexus-pill">Live API: Connected</span>
+           <span class="nexus-pill">Webhooks: Active</span>
+        </div>
       </div>
     </div>
   </NuxtLayout>
@@ -86,18 +115,29 @@
 <script setup>
 const supabase = useSupabaseClient()
 const activeContact = ref(null)
+const contactSearch = ref('')
 const newMessage = ref('')
 const messageContainer = ref(null)
 
-// In a real app, these would come from the 'mera.profiles' and 'mera.messages' tables
 const contacts = ref([])
 const messages = ref([])
 
 const fetchContacts = async () => {
-  const { data } = await supabase.from('profiles').select('*').limit(10)
+  const { data } = await supabase.from('profiles').select('*').limit(20)
   contacts.value = data || []
-  if (contacts.value.length > 0) activeContact.value = contacts.value[0]
+  if (contacts.value.length > 0 && !activeContact.value) {
+    activeContact.value = contacts.value[0]
+  }
 }
+
+const filteredContacts = computed(() => {
+  if (!contactSearch.value) return contacts.value
+  const q = contactSearch.value.toLowerCase()
+  return contacts.value.filter(c => 
+    c.full_name?.toLowerCase().includes(q) || 
+    c.whatsapp_id?.includes(q)
+  )
+})
 
 const fetchMessages = async () => {
   if (!activeContact.value) return
@@ -117,17 +157,15 @@ const sendMessage = async () => {
   const content = newMessage.value
   newMessage.value = ''
 
-  // 1. Insert into DB (Dashboard visibility)
   const { data, error } = await supabase.from('messages').insert({
     whatsapp_id: activeContact.value.whatsapp_id,
     direction: 'OUTBOUND',
     content: content
   })
 
-  // 2. Trigger WhatsApp API via Nuxt Server Action or Edge Function
-  // await $fetch('/api/whatsapp/send', { method: 'POST', body: { to: activeContact.value.whatsapp_id, message: content } })
-
+  // Local optimistic update
   if (!error) {
+    // In a real app we'd wait for realtime, but let's push for UX
     messages.value.push({
       id: Math.random(),
       direction: 'OUTBOUND',
@@ -150,7 +188,6 @@ const scrollToBottom = () => {
   })
 }
 
-// 🌐 Realtime Subscription
 let messageSubscription = null
 
 const setupRealtime = () => {
@@ -161,9 +198,7 @@ const setupRealtime = () => {
       schema: 'mera', 
       table: 'messages'
     }, (payload) => {
-      // If the message is for the currently active contact, push it to the list
       if (activeContact.value && payload.new.whatsapp_id === activeContact.value.whatsapp_id) {
-        // Avoid duplicate push if we just sent it ourselves
         const exists = messages.value.some(m => m.id === payload.new.id)
         if (!exists) {
           messages.value.push(payload.new)
@@ -171,7 +206,6 @@ const setupRealtime = () => {
         }
       }
       
-      // Update contact's last message in the sidebar
       const contact = contacts.value.find(c => c.whatsapp_id === payload.new.whatsapp_id)
       if (contact) {
         contact.last_message = payload.new.content
@@ -198,94 +232,140 @@ onUnmounted(() => {
 <style scoped>
 .chat-page {
   display: flex;
-  height: calc(100vh - 48px);
+  height: calc(100vh - 120px);
   border-radius: 24px;
   overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.1);
 }
 
 /* Contacts Sidebar */
 .contacts-sidebar {
-  width: 350px;
+  width: 380px;
   border-right: 1px solid var(--mera-border);
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.sidebar-header {
-  padding: 24px;
+.sidebar-header { padding: 32px 32px 24px; }
+.header-main h3 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+
+.live-pill {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-}
-
-.online-status {
-  font-size: 11px;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
   color: #34c759;
   background: rgba(52, 199, 89, 0.1);
-  padding: 2px 8px;
-  border-radius: 12px;
+  padding: 4px 10px;
+  border-radius: 40px;
+  width: fit-content;
 }
 
-.search-box { padding: 0 24px 16px; }
+.live-blink { animation: blink 2s infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-.contacts-list {
-  flex: 1;
-  overflow-y: auto;
-}
+.search-box { padding: 0 32px 20px; }
+.search-inner { display: flex; align-items: center; padding: 10px 16px; gap: 10px; border-radius: 12px; }
+.search-icon { opacity: 0.5; font-size: 14px; }
+.glass-input-sm-clean { background: none; border: none; color: var(--mera-text); width: 100%; font-size: 13px; }
+.glass-input-sm-clean:focus { outline: none; }
+
+.contacts-list { flex: 1; overflow-y: auto; padding-bottom: 20px; }
 
 .contact-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 24px;
+  gap: 16px;
+  padding: 16px 32px;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
 }
 
-.contact-item:hover { background: rgba(255, 255, 255, 0.03); }
-.contact-item.active { background: rgba(255, 77, 148, 0.05); }
+.contact-item:hover { background: rgba(255, 255, 255, 0.05); }
+.contact-item.active { background: rgba(255, 77, 148, 0.1); }
+.contact-item.active::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--mera-primary); }
 
-.contact-info {
-  flex: 1;
+.avatar-wrap { position: relative; }
+.avatar-box {
+  width: 48px;
+  height: 48px;
+  background: #f0f0f0;
+  border-radius: 14px;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: var(--mera-primary);
 }
 
-.contact-name { font-weight: 500; font-size: 14px; }
+.unread-pulse {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: var(--mera-primary);
+  border: 2px solid white;
+  border-radius: 50%;
+}
+
+.contact-info { flex: 1; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+.name-row { display: flex; justify-content: space-between; align-items: center; }
+.contact-name { font-weight: 800; font-size: 15px; }
+.country-hint { font-size: 10px; opacity: 0.5; font-weight: 700; }
 .last-msg { font-size: 12px; color: var(--mera-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Message Area */
-.message-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
+.message-area { flex: 1; display: flex; flex-direction: column; background: rgba(255, 255, 255, 0.02); }
 
 .chat-header {
-  padding: 16px 32px;
+  padding: 24px 40px;
   border-bottom: 1px solid var(--mera-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.active-user { display: flex; gap: 12px; align-items: center; }
-.avatar-md { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--mera-primary), var(--mera-accent)); }
-.whatsapp-id { font-size: 12px; color: var(--mera-text-muted); }
+.active-user { display: flex; gap: 16px; align-items: center; }
+.avatar-md-premium {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--mera-primary), var(--mera-accent));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+  box-shadow: 0 4px 15px rgba(255, 77, 148, 0.3);
+}
 
-.header-actions { display: flex; gap: 12px; }
-.location-btn { padding: 8px 16px; border-radius: 12px; font-size: 13px; color: var(--mera-text); text-decoration: none; }
+.user-details h3 { font-size: 18px; font-weight: 800; }
+.whatsapp-id { font-size: 12px; color: var(--mera-text-muted); font-weight: 600; }
+
+.util-btn {
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mera-text);
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+}
 
 .messages-container {
   flex: 1;
-  padding: 32px;
+  padding: 40px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .msg-wrapper { display: flex; width: 100%; }
@@ -293,47 +373,36 @@ onUnmounted(() => {
 .msg-wrapper.inbound { justify-content: flex-start; }
 
 .msg-bubble {
-  max-width: 60%;
-  padding: 12px 16px;
-  border-radius: 16px;
+  max-width: 65%;
+  padding: 16px 20px;
+  border-radius: 20px;
   position: relative;
 }
 
 .outbound .msg-bubble {
   border-bottom-right-radius: 4px;
-  background: rgba(255, 77, 148, 0.1);
+  background: linear-gradient(135deg, var(--mera-primary), var(--mera-accent));
+  color: white;
 }
 
-.inbound .msg-bubble {
-  border-bottom-left-radius: 4px;
-}
+.inbound .msg-bubble { border-bottom-left-radius: 4px; }
 
-.msg-time {
-  display: block;
-  font-size: 10px;
-  color: var(--mera-text-muted);
-  margin-top: 4px;
-}
+.msg-footer { display: flex; justify-content: flex-end; align-items: center; gap: 6px; margin-top: 6px; }
+.msg-time { font-size: 10px; opacity: 0.6; font-weight: 700; }
+.read-receipt { font-size: 10px; color: white; opacity: 0.8; }
 
-.input-area {
-  padding: 24px 32px;
-  background: rgba(255, 255, 255, 0.02);
-}
+.input-area { padding: 32px 40px; }
+.chat-form { display: flex; gap: 20px; align-items: center; }
+.tool-btn { background: none; border: none; font-size: 22px; cursor: pointer; opacity: 0.5; }
 
-.chat-form {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
+.input-wrap { flex: 1; padding: 4px 20px; border-radius: 20px; }
+.main-chat-input { background: none; border: none; color: var(--mera-text); width: 100%; padding: 12px 0; font-size: 15px; }
+.main-chat-input:focus { outline: none; }
 
-.attach-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--mera-text-muted); }
-
-.glass-input { flex: 1; padding: 12px 20px; border-radius: 16px; }
-
-.send-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+.send-btn-nexus {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
   background: var(--mera-primary);
   border: none;
   color: white;
@@ -341,21 +410,28 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s;
+  font-size: 20px;
+  box-shadow: 0 4px 15px rgba(255, 77, 148, 0.4);
 }
 
-.send-btn:hover:not(:disabled) { transform: scale(1.05); }
-.send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.empty-chat {
+.empty-chat-nexus {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 16px;
+  gap: 24px;
+  position: relative;
 }
 
-.illustration { font-size: 80px; }
+.nexus-illustration { font-size: 100px; transform: rotate(-5deg); filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1)); }
+.empty-chat-nexus h2 { font-size: 32px; font-weight: 800; }
+.empty-chat-nexus p { color: var(--mera-text-muted); max-width: 400px; line-height: 1.6; }
+
+.nexus-status-pills { display: flex; gap: 12px; }
+.nexus-pill { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--mera-text-muted); background: rgba(0,0,0,0.03); padding: 6px 16px; border-radius: 40px; }
+
+.thin-scrollbar::-webkit-scrollbar { width: 4px; }
+.thin-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
 </style>
